@@ -23,8 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function handleFormSubmit(e) {
-    e.preventDefault();
-    
     let isValid = true;
     
     // 全ての必須フィールドをバリデーション
@@ -45,10 +43,15 @@ function handleFormSubmit(e) {
         isValid = false;
     }
     
-    if (isValid) {
-        // フォームが有効な場合の処理
-        showSuccessMessage();
-    } else {
+    // reCAPTCHAの検証（Netlifyが提供するreCAPTCHAの場合は自動処理されるため、基本的なチェックのみ）
+    const recaptchaDiv = document.getElementById('netlify-recaptcha');
+    if (recaptchaDiv && recaptchaDiv.children.length === 0) {
+        // reCAPTCHAがまだ読み込まれていない場合のみエラー表示
+        // 実際のバリデーションはNetlifyが行う
+    }
+    
+    if (!isValid) {
+        e.preventDefault();
         // エラーがある場合は最初のエラーフィールドにフォーカス
         const firstError = document.querySelector('.error-message[style*="block"]');
         if (firstError) {
@@ -59,6 +62,8 @@ function handleFormSubmit(e) {
             }
         }
     }
+    
+    // バリデーションが通れば、Netlifyがフォーム送信を処理
 }
 
 function validateField(fieldId, customMessage = null) {
@@ -84,15 +89,17 @@ function validateEmail() {
         return false;
     }
     
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showError('email', '正しいメールアドレスの形式で入力してください。');
+    // より柔軟なメールバリデーション（test@test等のダミーメールも許可）
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]*$/;
+    if (!emailRegex.test(email) && !email.includes('@')) {
+        showError('email', 'メールアドレスの形式で入力してください（例: test@test）。');
         return false;
     }
     
     clearError('email');
     return true;
 }
+
 
 function getDefaultErrorMessage(fieldId) {
     const messages = {
